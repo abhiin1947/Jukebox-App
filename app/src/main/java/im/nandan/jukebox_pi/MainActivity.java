@@ -4,12 +4,24 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
 
 
 public class MainActivity extends Activity {
@@ -49,11 +61,13 @@ public class MainActivity extends Activity {
             //Title TextView
             TextView tv = designTV();
             tv.setText(cursor.getString(1));
+            tv.setOnClickListener(designClick(cursor.getString(3)));
             ml.addView(tv);
 
             //Artist TextView
             tv = designTV2();
             tv.setText(cursor.getString(4));
+            tv.setOnClickListener(designClick(cursor.getString(3)));
             ml.addView(tv);
         }
     }
@@ -77,6 +91,17 @@ public class MainActivity extends Activity {
         return tv;
     }
 
+    private View.OnClickListener designClick(final String data)
+    {
+        View.OnClickListener ocl = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startTheMusic(data);
+            }
+        };
+        return ocl;
+    }
+
     private LinearLayout designLL()
     {
         LinearLayout ll = new LinearLayout(getApplicationContext());
@@ -87,6 +112,49 @@ public class MainActivity extends Activity {
         return ll;
     }
 
+    public void startTheMusic(String filepath)
+    {
+        NetworkFileTransfer nft = new NetworkFileTransfer();
+        nft.execute(filepath);
+    }
+
+    private class NetworkFileTransfer extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strings) {
+            String filepath = strings[0];
+
+            try {
+                Socket s = new Socket("192.168.0.100", 8087);
+                if(s.isConnected())
+                {
+                    FileInputStream fis = new FileInputStream(new File(filepath));
+                    OutputStream os = s.getOutputStream();
+
+                    byte[] headers = new byte[38000];
+                    byte[] data = new byte[512];
+
+                    fis.read(headers);
+                    os.write(headers);
+
+                    while(fis.read(data) != -1)
+                    {
+                        os.write(data);
+                    }
+                    s.close();
+                }
+                else
+                {
+                    Log.e("Not Connected", "Connection the pi has failed");
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
