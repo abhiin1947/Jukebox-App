@@ -26,6 +26,9 @@ import java.net.Socket;
 
 public class MainActivity extends Activity {
 
+    final String IP_ADDRESS = "192.168.0.100";
+    final int port = 8087;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,7 +61,7 @@ public class MainActivity extends Activity {
                 null);
 
         while(cursor.moveToNext()) {
-            //Title TextView
+            /*//Title TextView
             TextView tv = designTV();
             tv.setText(cursor.getString(1));
             tv.setOnClickListener(designClick(cursor.getString(3)));
@@ -67,8 +70,15 @@ public class MainActivity extends Activity {
             //Artist TextView
             tv = designTV2();
             tv.setText(cursor.getString(4));
-            tv.setOnClickListener(designClick(cursor.getString(3)));
-            ml.addView(tv);
+            tv.setOnClickListener(designClick(cursor.getString(3)));*/
+
+            final String songname = cursor.getString(1);
+            final String artistname = cursor.getString(4);
+            final String datauri = cursor.getString(3);
+
+            LinearLayout ll = designLL(songname, artistname, datauri);
+
+            ml.addView(ll);
         }
     }
 
@@ -102,12 +112,23 @@ public class MainActivity extends Activity {
         return ocl;
     }
 
-    private LinearLayout designLL()
+    private LinearLayout designLL(String tv1text, String tv2text, String datauri)
     {
         LinearLayout ll = new LinearLayout(getApplicationContext());
-        ll.setOrientation(LinearLayout.HORIZONTAL);
+        ll.setOrientation(LinearLayout.VERTICAL);
         ll.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        ll.setPadding(10,2,0,2);
 
+        TextView tv = designTV();
+        tv.setText(tv1text);
+        ll.addView(tv);
+
+        //Artist TextView
+        tv = designTV2();
+        tv.setText(tv2text);
+        ll.addView(tv);
+
+        ll.setOnClickListener(designClick(datauri));
 
         return ll;
     }
@@ -125,7 +146,7 @@ public class MainActivity extends Activity {
             String filepath = strings[0];
 
             try {
-                Socket s = new Socket("192.168.0.100", 8087);
+                Socket s = new Socket(IP_ADDRESS, port);
                 if(s.isConnected())
                 {
                     FileInputStream fis = new FileInputStream(new File(filepath));
